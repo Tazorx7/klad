@@ -61,6 +61,7 @@ impl Report {
         self.findings.sort_by(compare_findings);
     }
 
+    #[allow(dead_code)]
     pub fn has_blockages(&self) -> bool {
         self.findings.iter().any(|f| f.severity >= Severity::High)
     }

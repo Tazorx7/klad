@@ -47,7 +47,10 @@ fn audit_document(value: &Value, file: &str, out: &mut Vec<Finding>) {
         return;
     };
 
-    let kind = value.get("kind").and_then(Value::as_str).unwrap_or("Unknown");
+    let kind = value
+        .get("kind")
+        .and_then(Value::as_str)
+        .unwrap_or("Unknown");
     let name = value
         .get("metadata")
         .and_then(|m| m.get("name"))
@@ -150,7 +153,9 @@ fn audit_document(value: &Value, file: &str, out: &mut Vec<Finding>) {
                 Severity::Medium,
                 file,
                 "runAsNonRoot Not Enforced",
-                format!("{container_id} does not enforce 'runAsNonRoot: true', so the image may start as root."),
+                format!(
+                    "{container_id} does not enforce 'runAsNonRoot: true', so the image may start as root."
+                ),
                 "Set 'securityContext.runAsNonRoot: true' (and ideally an explicit non-zero runAsUser).",
             );
         }
@@ -387,7 +392,10 @@ spec:
         ));
         let ids = rule_ids(&findings);
         assert!(ids.contains(&"K8S-002"));
-        assert!(!ids.contains(&"K8S-004"), "root should not also be 'non-root missing'");
+        assert!(
+            !ids.contains(&"K8S-004"),
+            "root should not also be 'non-root missing'"
+        );
     }
 
     #[test]

@@ -29,23 +29,27 @@ pub fn is_dockerfile(path: &Path) -> bool {
         if rest.is_empty() {
             return false;
         }
-        if let Some(ext) = rest.rsplit('.').next() {
-            if ["md", "txt", "rst", "adoc", "json", "yaml", "yml"].contains(&ext) {
-                return false;
-            }
+        if let Some(ext) = rest.rsplit('.').next()
+            && ["md", "txt", "rst", "adoc", "json", "yaml", "yml"].contains(&ext)
+        {
+            return false;
         }
-        return rest.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_');
+        return rest
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_');
     }
     if let Some(rest) = name.strip_prefix("containerfile.") {
         if rest.is_empty() {
             return false;
         }
-        if let Some(ext) = rest.rsplit('.').next() {
-            if ["md", "txt", "rst", "adoc", "json", "yaml", "yml"].contains(&ext) {
-                return false;
-            }
+        if let Some(ext) = rest.rsplit('.').next()
+            && ["md", "txt", "rst", "adoc", "json", "yaml", "yml"].contains(&ext)
+        {
+            return false;
         }
-        return rest.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_');
+        return rest
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_');
     }
 
     false
@@ -103,7 +107,7 @@ pub fn scan(path: &Path, content: &str) -> Vec<Finding> {
 
                 if args.len() >= 2 {
                     let (sources, _destination) = args.split_at(args.len() - 1);
-                    if sources.iter().any(|src| *src == ".") {
+                    if sources.contains(&".") {
                         findings.push(finding(
                             "DF-003",
                             Severity::Low,
@@ -284,11 +288,17 @@ mod tests {
 
     #[test]
     fn flags_unpinned_and_root() {
-        let findings = scan(Path::new("Dockerfile"), "FROM ubuntu:latest\nUSER root:root\n");
+        let findings = scan(
+            Path::new("Dockerfile"),
+            "FROM ubuntu:latest\nUSER root:root\n",
+        );
         assert!(ids(&findings).contains(&"DF-002"));
         assert!(ids(&findings).contains(&"DF-001"));
         // explicit root + no missing-user finding duplicate
-        assert_eq!(ids(&findings).iter().filter(|id| **id == "DF-001").count(), 1);
+        assert_eq!(
+            ids(&findings).iter().filter(|id| **id == "DF-001").count(),
+            1
+        );
     }
 
     #[test]
@@ -314,7 +324,13 @@ COPY --from=build /app /app
 
     #[test]
     fn ignores_root_copy_when_destination_only() {
-        assert!(scan(Path::new("Dockerfile"), "FROM scratch\nUSER app\nCOPY app .\n").is_empty());
+        assert!(
+            scan(
+                Path::new("Dockerfile"),
+                "FROM scratch\nUSER app\nCOPY app .\n"
+            )
+            .is_empty()
+        );
         assert_eq!(
             ids(&scan(
                 Path::new("Dockerfile"),

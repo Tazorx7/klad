@@ -5,7 +5,7 @@ Thank you for your interest in contributing to klad! We welcome contributions fr
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/yourusername/klad.git`
+2. Clone your fork: `git clone https://github.com/Tazorx7/klad.git`
 3. Create a feature branch: `git checkout -b feature/your-feature`
 4. Make your changes
 5. Run tests: `cargo test`
