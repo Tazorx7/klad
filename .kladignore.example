@@ -1,0 +1,10 @@
+# klad ignore file example
+# Ignore specific rules globally
+# rule:DF-003
+
+# Ignore files/directories
+# file:tests/
+# file:vendor/
+
+# Ignore specific findings by rule ID
+# K8S-003
