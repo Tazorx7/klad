@@ -17,7 +17,6 @@ If you discover a security vulnerability in klad, please report it responsibly.
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
 Instead, please report them via:
-- Email: security@klad.dev (or create a private security advisory)
 - GitHub Security Advisories: [Report a vulnerability](https://github.com/tazorx7/klad/security/advisories/new)
 
 ### What to Include
