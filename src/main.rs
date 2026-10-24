@@ -9,7 +9,7 @@ use models::report::{Finding, Report, Severity};
 use scanner::scan_path;
 use std::collections::HashSet;
 use std::fs;
-use std::io::{self, Write};
+
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -98,63 +98,64 @@ fn main() -> ExitCode {
     report.sort();
 
     // Apply ignore rules
-    let ignore_path = args.ignore_file.clone().unwrap_or_else(|| PathBuf::from(".kladignore"));
-    if ignore_path.exists() {
-        if let Ok(content) = fs::read_to_string(&ignore_path) {
-            let ignore_rules: Vec<String> = content
-                .lines()
-                .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
-                .map(|l| l.trim().to_string())
-                .collect();
-            report.findings.retain(|f| {
-                for rule in &ignore_rules {
-                    if let Some(rule_id) = rule.strip_prefix("rule:") {
-                        if f.rule_id == rule_id.trim() {
-                            return false;
-                        }
-                    } else if let Some(pattern) = rule.strip_prefix("file:") {
-                        if f.file_path.contains(pattern.trim()) {
-                            return false;
-                        }
-                    } else if f.file_path.contains(rule.as_str()) || f.rule_id == rule.as_str() {
+    let ignore_path = args
+        .ignore_file
+        .clone()
+        .unwrap_or_else(|| PathBuf::from(".kladignore"));
+    if ignore_path.exists()
+        && let Ok(content) = fs::read_to_string(&ignore_path)
+    {
+        let ignore_rules: Vec<String> = content
+            .lines()
+            .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
+            .map(|l| l.trim().to_string())
+            .collect();
+        report.findings.retain(|f| {
+            for rule in &ignore_rules {
+                if let Some(rule_id) = rule.strip_prefix("rule:") {
+                    if f.rule_id == rule_id.trim() {
                         return false;
                     }
+                } else if let Some(pattern) = rule.strip_prefix("file:") {
+                    if f.file_path.contains(pattern.trim()) {
+                        return false;
+                    }
+                } else if f.file_path.contains(rule.as_str()) || f.rule_id == rule.as_str() {
+                    return false;
                 }
-                true
-            });
-        }
+            }
+            true
+        });
     }
 
     // Apply baseline diff
     let mut findings_to_report = report.findings.clone();
-    if let Some(baseline_path) = &args.baseline {
-        if baseline_path.exists() {
-            if let Ok(content) = fs::read_to_string(baseline_path) {
-                if let Ok(baseline) = serde_json::from_str::<BaselineReport>(&content) {
-                    let mut baseline_keys = HashSet::new();
-                    for f in &baseline.findings {
-                        let key = format!(
-                            "{}:{}:{}:{}",
-                            f.rule_id,
-                            f.file_path,
-                            f.line_number.unwrap_or(usize::MAX),
-                            f.title
-                        );
-                        baseline_keys.insert(key);
-                    }
-                    findings_to_report.retain(|f| {
-                        let key = format!(
-                            "{}:{}:{}:{}",
-                            f.rule_id,
-                            f.file_path,
-                            f.line_number.unwrap_or(usize::MAX),
-                            f.title
-                        );
-                        !baseline_keys.contains(&key)
-                    });
-                }
-            }
+    if let Some(baseline_path) = &args.baseline
+        && baseline_path.exists()
+        && let Ok(content) = fs::read_to_string(baseline_path)
+        && let Ok(baseline) = serde_json::from_str::<BaselineReport>(&content)
+    {
+        let mut baseline_keys = HashSet::new();
+        for f in &baseline.findings {
+            let key = format!(
+                "{}:{}:{}:{}",
+                f.rule_id,
+                f.file_path,
+                f.line_number.unwrap_or(usize::MAX),
+                f.title
+            );
+            baseline_keys.insert(key);
         }
+        findings_to_report.retain(|f| {
+            let key = format!(
+                "{}:{}:{}:{}",
+                f.rule_id,
+                f.file_path,
+                f.line_number.unwrap_or(usize::MAX),
+                f.title
+            );
+            !baseline_keys.contains(&key)
+        });
     }
 
     let output = match args.output {
@@ -181,7 +182,7 @@ fn main() -> ExitCode {
             return ExitCode::from(2);
         }
     } else {
-        println!("{output}");
+        print!("{output}");
     }
 
     // Determine if we should fail
@@ -191,9 +192,7 @@ fn main() -> ExitCode {
         .map(Severity::from)
         .unwrap_or(Severity::High);
 
-    let should_fail = findings_to_report
-        .iter()
-        .any(|f| f.severity >= threshold);
+    let should_fail = findings_to_report.iter().any(|f| f.severity >= threshold);
 
     if should_fail {
         ExitCode::from(args.exit_code)
@@ -207,7 +206,10 @@ fn format_table(findings: &[Finding], use_color: bool) -> String {
         return "\n[+] Success! No security findings detected.\n".to_string();
     }
 
-    let mut output = format!("\n[!] Klad found {} security finding(s):\n\n", findings.len());
+    let mut output = format!(
+        "\n[!] Klad found {} security finding(s):\n\n",
+        findings.len()
+    );
 
     let mut table = Table::new();
     table.set_header(vec![

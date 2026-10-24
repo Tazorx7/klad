@@ -147,8 +147,8 @@ fn build_ruleset() -> Ruleset {
     let mut pattern_rules = Vec::new();
 
     for (index, (id, title, severity, literals, regex)) in definitions.iter().enumerate() {
-        let pattern = Regex::new(regex)
-            .unwrap_or_else(|err| panic!("invalid secret rule {id}: {err}"));
+        let pattern =
+            Regex::new(regex).unwrap_or_else(|err| panic!("invalid secret rule {id}: {err}"));
         rules.push(Rule {
             id,
             title,
